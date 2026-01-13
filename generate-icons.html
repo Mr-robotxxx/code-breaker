@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Icon Generator for Code Breaker</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        canvas { border: 1px solid #ccc; margin: 10px; }
+        .preview { display: inline-block; margin: 10px; text-align: center; }
+        .download-btn { display: block; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Simple Icon Generator for Code Breaker</h1>
+    <p>This will generate basic icons for your game. For better icons, use an image editor.</p>
+    
+    <button onclick="generateIcons()">Generate All Icons</button>
+    <div id="output"></div>
+    
+    <script>
+        function generateIcons() {
+            const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+            const output = document.getElementById('output');
+            output.innerHTML = '';
+            
+            sizes.forEach(size => {
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+                
+                // Background
+                ctx.fillStyle = '#0a0e17';
+                ctx.fillRect(0, 0, size, size);
+                
+                // Circle
+                ctx.fillStyle = '#00ff9d';
+                ctx.beginPath();
+                ctx.arc(size/2, size/2, size/3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Number
+                ctx.fillStyle = '#0a0e17';
+                ctx.font = `bold ${size/3}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('CB', size/2, size/2);
+                
+                // Preview
+                const preview = document.createElement('div');
+                preview.className = 'preview';
+                preview.innerHTML = `
+                    <div>${size}x${size}</div>
+                    <img src="${canvas.toDataURL('image/png')}" alt="${size} icon">
+                    <a class="download-btn" href="${canvas.toDataURL('image/png')}" download="icon-${size}.png">Download</a>
+                `;
+                output.appendChild(preview);
+            });
+        }
+    </script>
+</body>
+</html>

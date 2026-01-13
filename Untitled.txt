@@ -1,0 +1,20 @@
+
+## 🎨 Icon Generator
+To generate icons, you can use:
+1. **Favicon.io** - Upload a 512x512 image and download all sizes
+2. **RealFaviconGenerator.net** - Comprehensive PWA icon generator
+3. Or use the simple icon provided in the icons folder
+
+## 🚀 Deployment
+This game is ready to deploy on:
+- **GitHub Pages** (free)
+- **Netlify** (free)
+- **Vercel** (free)
+- Any static hosting service
+
+## 📝 License
+Free to use and modify. Credit appreciated but not required.
+
+---
+
+**Happy Code Breaking!** 🔐✨

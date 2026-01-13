@@ -1,0 +1,2462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="application-name" content="Code Breaker">
+    <meta name="apple-mobile-web-app-title" content="Code Breaker">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0a0e17">
+    <meta name="description" content="A challenging code-breaking puzzle game. Crack the security codes and become a master hacker!">
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    
+    <title>Code Breaker: Hacker Challenge</title>
+    
+    <style>
+        /* Install Button Styles */
+        .install-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #00ff9d, #00b8ff);
+            color: #0a0e17;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0, 255, 157, 0.3);
+            transition: all 0.3s;
+            display: none;
+            font-size: 1rem;
+        }
+        
+        .install-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 255, 157, 0.4);
+        }
+        
+        .offline-notice {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background-color: #ffb800;
+            color: #0a0e17;
+            text-align: center;
+            padding: 12px;
+            font-weight: bold;
+            z-index: 1001;
+            display: none;
+            font-size: 0.9rem;
+        }
+        
+        /* Solution Reveal Styles */
+        .solution-reveal {
+            text-align: center;
+            margin-top: 20px;
+            padding: 25px;
+            background-color: rgba(255, 71, 87, 0.1);
+            border-radius: 10px;
+            border: 3px solid rgba(255, 71, 87, 0.3);
+            display: none;
+        }
+        
+        .solution-title {
+            color: #ff4757;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .solution-code {
+            font-size: 3rem;
+            font-family: monospace;
+            color: #ff4757;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            letter-spacing: 5px;
+            border: 2px solid rgba(255, 71, 87, 0.2);
+            margin: 15px 0;
+            animation: pulse-solution 2s infinite;
+        }
+        
+        .solution-stats {
+            color: #cbd5e1;
+            font-size: 1.2rem;
+            margin-top: 15px;
+            line-height: 1.6;
+        }
+        
+        .solution-stat {
+            display: inline-block;
+            background-color: rgba(255, 71, 87, 0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            margin: 0 5px;
+        }
+        
+        /* Game Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #0a0e17;
+            color: #00ff9d;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 255, 157, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(155, 89, 182, 0.05) 0%, transparent 20%);
+        }
+        
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            background-color: #0f172a;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 0 30px rgba(0, 255, 157, 0.2);
+            border: 1px solid rgba(0, 255, 157, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .container::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #00ff9d, #00b8ff, #9b59b6, #ffb800);
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(0, 255, 157, 0.2);
+        }
+        
+        h1 {
+            font-size: 3.2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #00ff9d, #00b8ff, #9b59b6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 10px rgba(0, 255, 157, 0.3);
+            letter-spacing: 2px;
+        }
+        
+        .subtitle {
+            color: #8be9fd;
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+        
+        .game-stats {
+            display: flex;
+            justify-content: space-between;
+            background-color: #1e293b;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 255, 157, 0.1);
+            margin-bottom: 25px;
+        }
+        
+        .stat-box {
+            text-align: center;
+            padding: 10px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #8be9fd;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #00ff9d;
+        }
+        
+        .stat-highlight {
+            color: #ffb800;
+        }
+        
+        .level-selector {
+            background-color: #1e293b;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(0, 255, 157, 0.1);
+        }
+        
+        .level-title {
+            color: #8be9fd;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .level-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .level-btn {
+            width: 70px;
+            height: 70px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #0f172a;
+            border: 2px solid #334155;
+            border-radius: 10px;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #8be9fd;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .level-btn:hover {
+            border-color: #00b8ff;
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 184, 255, 0.3);
+        }
+        
+        .level-btn.selected {
+            background-color: #00ff9d;
+            color: #0a0e17;
+            border-color: #00ff9d;
+            box-shadow: 0 0 20px rgba(0, 255, 157, 0.7);
+        }
+        
+        .level-difficulty {
+            font-size: 0.7rem;
+            margin-top: 5px;
+        }
+        
+        .points-section {
+            background-color: rgba(155, 89, 182, 0.15);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+            border: 1px solid rgba(155, 89, 182, 0.3);
+        }
+        
+        .points-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .points-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .points-label {
+            color: #9b59b6;
+            font-size: 1rem;
+        }
+        
+        .points-value {
+            color: #9b59b6;
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+        
+        .points-btn {
+            background-color: #9b59b6;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+            font-size: 1.1rem;
+        }
+        
+        .points-btn:hover:not(:disabled) {
+            background-color: #8e44ad;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(155, 89, 182, 0.4);
+        }
+        
+        .points-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            background-color: #1e293b;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 255, 157, 0.1);
+        }
+        
+        .info-box {
+            text-align: center;
+        }
+        
+        .info-label {
+            font-size: 0.9rem;
+            color: #8be9fd;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #00ff9d;
+        }
+        
+        .attempts-left {
+            color: #ff79c6;
+        }
+        
+        .input-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .input-label {
+            font-size: 1.3rem;
+            color: #8be9fd;
+        }
+        
+        .code-inputs-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+            min-height: 90px;
+        }
+        
+        .digit-input {
+            width: 80px;
+            height: 90px;
+            font-size: 3rem;
+            text-align: center;
+            background-color: #1e293b;
+            border: 3px solid #334155;
+            border-radius: 10px;
+            color: #00ff9d;
+            caret-color: #00ff9d;
+            transition: all 0.2s;
+            -webkit-appearance: none;
+            -moz-appearance: textfield;
+            font-weight: bold;
+        }
+        
+        .digit-input::-webkit-outer-spin-button,
+        .digit-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        .digit-input:focus {
+            outline: none;
+            border-color: #00ff9d;
+            box-shadow: 0 0 15px rgba(0, 255, 157, 0.7);
+        }
+        
+        .digit-input.filled {
+            border-color: #00b8ff;
+            background-color: rgba(0, 184, 255, 0.1);
+        }
+        
+        .digit-input.revealed {
+            background-color: rgba(155, 89, 182, 0.3);
+            border-color: #9b59b6;
+            color: #9b59b6;
+            font-weight: bold;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .btn {
+            padding: 14px 35px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            min-width: 180px;
+        }
+        
+        .btn-primary {
+            background-color: #00ff9d;
+            color: #0a0e17;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            background-color: #00e087;
+            transform: translateY(-3px);
+            box-shadow: 0 7px 20px rgba(0, 255, 157, 0.5);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background-color: transparent;
+            color: #8be9fd;
+            border: 2px solid #8be9fd;
+        }
+        
+        .btn-secondary:hover {
+            background-color: rgba(139, 233, 253, 0.15);
+            transform: translateY(-3px);
+            box-shadow: 0 7px 20px rgba(139, 233, 253, 0.3);
+        }
+        
+        .btn-hint {
+            background-color: transparent;
+            color: #ffb800;
+            border: 2px solid #ffb800;
+            animation: pulse-hint 2s infinite;
+        }
+        
+        .btn-hint:hover {
+            background-color: rgba(255, 184, 0, 0.15);
+            transform: translateY(-3px);
+            box-shadow: 0 7px 20px rgba(255, 184, 0, 0.3);
+        }
+        
+        .btn-points {
+            background-color: transparent;
+            color: #9b59b6;
+            border: 2px solid #9b59b6;
+            animation: pulse-points 2s infinite;
+        }
+        
+        .btn-points:hover:not(:disabled) {
+            background-color: rgba(155, 89, 182, 0.15);
+            transform: translateY(-3px);
+            box-shadow: 0 7px 20px rgba(155, 89, 182, 0.3);
+        }
+        
+        .btn-points:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            animation: none;
+        }
+        
+        .btn-buy-attempt {
+            background-color: transparent;
+            color: #ff4757;
+            border: 2px solid #ff4757;
+            animation: pulse-attempt 2s infinite;
+        }
+        
+        .btn-buy-attempt:hover:not(:disabled) {
+            background-color: rgba(255, 71, 87, 0.15);
+            transform: translateY(-3px);
+            box-shadow: 0 7px 20px rgba(255, 71, 87, 0.3);
+        }
+        
+        .btn-buy-attempt:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            animation: none;
+        }
+        
+        .hint-section {
+            background-color: rgba(255, 184, 0, 0.15);
+            padding: 25px;
+            border-radius: 10px;
+            border: 2px solid rgba(255, 184, 0, 0.3);
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .hint-title {
+            color: #ffb800;
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .hint-content {
+            color: #ffd166;
+            font-size: 1.2rem;
+            line-height: 1.6;
+        }
+        
+        .reveal-section {
+            background-color: rgba(155, 89, 182, 0.15);
+            padding: 25px;
+            border-radius: 10px;
+            border: 2px solid rgba(155, 89, 182, 0.3);
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .reveal-title {
+            color: #9b59b6;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .reveal-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .reveal-option {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(155, 89, 182, 0.2);
+            border: 2px solid #9b59b6;
+            border-radius: 10px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #9b59b6;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .reveal-option:hover:not(.used) {
+            background-color: rgba(155, 89, 182, 0.4);
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(155, 89, 182, 0.4);
+        }
+        
+        .reveal-option.used {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: rgba(155, 89, 182, 0.1);
+        }
+        
+        .attempts-history {
+            margin-top: 20px;
+        }
+        
+        .history-title {
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            color: #8be9fd;
+            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .history-list {
+            max-height: 400px;
+            overflow-y: auto;
+            background-color: #1e293b;
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid rgba(0, 255, 157, 0.1);
+        }
+        
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 12px;
+            background-color: #0f172a;
+            border-radius: 10px;
+            border-left: 5px solid #00ff9d;
+            transition: all 0.3s;
+        }
+        
+        .history-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .history-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .history-attempt {
+            font-weight: bold;
+            font-size: 1.5rem;
+            letter-spacing: 5px;
+            min-width: 200px;
+            color: #00ff9d;
+        }
+        
+        .history-feedback {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .correct-position, .correct-number {
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .correct-position {
+            background-color: rgba(0, 255, 157, 0.2);
+            color: #00ff9d;
+        }
+        
+        .correct-number {
+            background-color: rgba(255, 121, 198, 0.2);
+            color: #ff79c6;
+        }
+        
+        .message {
+            text-align: center;
+            font-size: 1.6rem;
+            padding: 25px;
+            margin-top: 20px;
+            border-radius: 10px;
+            display: none;
+            font-weight: bold;
+        }
+        
+        .message.success {
+            display: block;
+            background-color: rgba(0, 255, 157, 0.15);
+            color: #00ff9d;
+            border: 3px solid #00ff9d;
+            animation: pulse 2s infinite;
+        }
+        
+        .message.error {
+            display: block;
+            background-color: rgba(255, 71, 87, 0.15);
+            color: #ff4757;
+            border: 3px solid #ff4757;
+        }
+        
+        .message.points {
+            display: block;
+            background-color: rgba(155, 89, 182, 0.15);
+            color: #9b59b6;
+            border: 3px solid #9b59b6;
+        }
+        
+        .achievement-container {
+            text-align: center;
+            margin-top: 20px;
+            padding: 25px;
+            background-color: rgba(0, 255, 157, 0.1);
+            border-radius: 10px;
+            border: 3px dashed rgba(0, 255, 157, 0.3);
+            display: none;
+        }
+        
+        .achievement-title {
+            color: #8be9fd;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .achievement {
+            font-size: 2.5rem;
+            font-family: monospace;
+            color: #00ff9d;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            letter-spacing: 3px;
+            border: 2px solid rgba(0, 255, 157, 0.2);
+            animation: glow 1.5s infinite alternate;
+            margin-bottom: 20px;
+        }
+        
+        .achievement-desc {
+            color: #cbd5e1;
+            font-size: 1.2rem;
+            margin-top: 15px;
+        }
+        
+        .instructions {
+            background-color: #1e293b;
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 30px;
+            border: 1px solid rgba(0, 255, 157, 0.1);
+        }
+        
+        .instructions h3 {
+            color: #8be9fd;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+            line-height: 1.6;
+        }
+        
+        .instructions li {
+            margin-bottom: 10px;
+            color: #cbd5e1;
+            font-size: 1.1rem;
+        }
+        
+        .instructions .highlight {
+            color: #00ff9d;
+            font-weight: bold;
+        }
+        
+        .instructions .hint-highlight {
+            color: #ffb800;
+            font-weight: bold;
+        }
+        
+        .instructions .points-highlight {
+            color: #9b59b6;
+            font-weight: bold;
+        }
+        
+        .difficulty-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .difficulty-easy { background-color: #00ff9d; }
+        .difficulty-medium { background-color: #ffb800; }
+        .difficulty-hard { background-color: #ff4757; }
+        .difficulty-expert { background-color: #9b59b6; }
+        .difficulty-master { background-color: #ff79c6; }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 255, 157, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(0, 255, 157, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 255, 157, 0); }
+        }
+        
+        @keyframes pulse-hint {
+            0% { box-shadow: 0 0 0 0 rgba(255, 184, 0, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(255, 184, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 184, 0, 0); }
+        }
+        
+        @keyframes pulse-points {
+            0% { box-shadow: 0 0 0 0 rgba(155, 89, 182, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(155, 89, 182, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(155, 89, 182, 0); }
+        }
+        
+        @keyframes pulse-attempt {
+            0% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(255, 71, 87, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); }
+        }
+        
+        @keyframes pulse-solution {
+            0% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(255, 71, 87, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); }
+        }
+        
+        @keyframes glow {
+            from { box-shadow: 0 0 10px rgba(0, 255, 157, 0.5); }
+            to { box-shadow: 0 0 25px rgba(0, 255, 157, 0.9); }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .game-info, .game-stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .digit-input {
+                width: 65px;
+                height: 75px;
+                font-size: 2.5rem;
+            }
+            
+            .history-item {
+                flex-direction: column;
+                gap: 15px;
+                align-items: center;
+                text-align: center;
+            }
+            
+            .history-attempt {
+                min-width: auto;
+                letter-spacing: 3px;
+            }
+            
+            .history-feedback {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .buttons {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .btn {
+                min-width: 150px;
+                padding: 12px 20px;
+            }
+            
+            .install-btn {
+                top: 10px;
+                right: 10px;
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+            
+            .solution-code {
+                font-size: 2.2rem;
+                letter-spacing: 3px;
+                padding: 15px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .code-inputs-container {
+                gap: 10px;
+            }
+            
+            .digit-input {
+                width: 55px;
+                height: 65px;
+                font-size: 2.2rem;
+            }
+            
+            .buttons {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+            
+            .level-options {
+                justify-content: center;
+            }
+            
+            .level-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+            
+            .solution-code {
+                font-size: 1.8rem;
+                letter-spacing: 2px;
+                padding: 12px;
+            }
+        }
+        
+        /* PWA Splash Screen */
+        @media all and (display-mode: standalone) {
+            body::before {
+                content: '';
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #0a0e17;
+                background-image: 
+                    radial-gradient(circle at 30% 30%, rgba(0, 255, 157, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 70% 70%, rgba(155, 89, 182, 0.1) 0%, transparent 50%);
+                z-index: 9999;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                animation: fadeOut 0.5s ease 1s forwards;
+            }
+            
+            body::after {
+                content: 'CODE BREAKER';
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 3rem;
+                font-weight: bold;
+                background: linear-gradient(90deg, #00ff9d, #00b8ff);
+                -webkit-background-clip: text;
+                background-clip: text;
+                color: transparent;
+                z-index: 10000;
+                animation: fadeOut 0.5s ease 1s forwards;
+            }
+            
+            @keyframes fadeOut {
+                to {
+                    opacity: 0;
+                    visibility: hidden;
+                }
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Install Button for PWA -->
+    <button id="installBtn" class="install-btn">
+        📱 Install App
+    </button>
+    
+    <!-- Offline Notice -->
+    <div id="offlineNotice" class="offline-notice">
+        ⚠️ You're offline - game saves work locally
+    </div>
+    
+    <div class="container">
+        <header>
+            <h1>CODE BREAKER</h1>
+            <p class="subtitle">HACKER CHALLENGE - Crack the Security Code</p>
+        </header>
+        
+        <div class="game-stats">
+            <div class="stat-box">
+                <div class="stat-label">Games Won</div>
+                <div class="stat-value" id="games-won">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Total Points</div>
+                <div class="stat-value stat-highlight" id="total-points">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Best Streak</div>
+                <div class="stat-value" id="best-streak">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Current Level</div>
+                <div class="stat-value" id="current-level-display">4</div>
+            </div>
+        </div>
+        
+        <div class="level-selector">
+            <div class="level-title">
+                Select Difficulty Level:
+            </div>
+            <div class="level-options" id="level-selector">
+                <div class="level-btn selected" data-digits="4" data-difficulty="easy">
+                    <span>4</span>
+                    <span class="level-difficulty"><span class="difficulty-indicator difficulty-easy"></span>Easy</span>
+                </div>
+                <div class="level-btn" data-digits="5" data-difficulty="medium">
+                    <span>5</span>
+                    <span class="level-difficulty"><span class="difficulty-indicator difficulty-medium"></span>Medium</span>
+                </div>
+                <div class="level-btn" data-digits="6" data-difficulty="hard">
+                    <span>6</span>
+                    <span class="level-difficulty"><span class="difficulty-indicator difficulty-hard"></span>Hard</span>
+                </div>
+                <div class="level-btn" data-digits="7" data-difficulty="expert">
+                    <span>7</span>
+                    <span class="level-difficulty"><span class="difficulty-indicator difficulty-expert"></span>Expert</span>
+                </div>
+                <div class="level-btn" data-digits="8" data-difficulty="master">
+                    <span>8</span>
+                    <span class="level-difficulty"><span class="difficulty-indicator difficulty-master"></span>Master</span>
+                </div>
+            </div>
+            
+            <div class="points-section">
+                <div class="points-display">
+                    <div class="points-info">
+                        <div class="points-label">HACKER POINTS</div>
+                        <div class="points-value" id="points-value">0</div>
+                        <small>Reveal digit costs: 5, 10, 25, 50, 100 points per level</small>
+                    </div>
+                    <button class="points-btn" id="reveal-btn" disabled>
+                        REVEAL DIGIT (<span id="reveal-cost">5</span> POINTS)
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="game-area">
+            <div class="game-info">
+                <div class="info-box">
+                    <div class="info-label">Attempts Left</div>
+                    <div class="info-value attempts-left" id="attempts-left">10</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">Current Attempt</div>
+                    <div class="info-value" id="current-attempt">1</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">Code Length</div>
+                    <div class="info-value" id="code-length">4</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">Game Status</div>
+                    <div class="info-value" id="status">Active</div>
+                </div>
+            </div>
+            
+            <div class="input-section">
+                <div class="input-label">Enter your code guess (<span id="digits-count">4</span> digits):</div>
+                <div class="code-inputs-container" id="code-inputs-container">
+                    <!-- Digit inputs will be generated here -->
+                </div>
+                
+                <div class="buttons">
+                    <button class="btn btn-primary" id="submit-btn" disabled>SUBMIT GUESS</button>
+                    <button class="btn btn-secondary" id="reset-btn">NEW GAME</button>
+                    <button class="btn btn-hint" id="hint-btn" style="display: none;">
+                        GET HINT (Free)
+                    </button>
+                    <button class="btn btn-points" id="use-points-btn" style="display: none;">
+                        USE POINTS
+                    </button>
+                    <button class="btn btn-buy-attempt" id="buy-attempt-btn" style="display: none;">
+                        BUY ATTEMPT (50 PTS)
+                    </button>
+                    <button class="btn btn-secondary" id="export-btn">💾 EXPORT SAVE</button>
+                    <button class="btn btn-secondary" id="import-btn">📂 IMPORT SAVE</button>
+                </div>
+                
+                <div class="hint-section" id="hint-section">
+                    <div class="hint-title">
+                        💡 HINT:
+                    </div>
+                    <div class="hint-content" id="hint-content">
+                        <!-- Hint content will appear here -->
+                    </div>
+                </div>
+                
+                <div class="reveal-section" id="reveal-section">
+                    <div class="reveal-title">
+                        🔍 REVEAL A DIGIT (Used: <span id="reveals-used">0</span>/2):
+                    </div>
+                    <div class="reveal-options" id="reveal-options">
+                        <!-- Reveal options will be generated here -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="message" id="message"></div>
+            
+            <!-- NEW: Solution Reveal Container -->
+            <div class="solution-reveal" id="solution-reveal">
+                <div class="solution-title">
+                    🔍 GAME OVER - SECRET CODE REVEALED
+                </div>
+                <div class="solution-code" id="solution-code">
+                    <!-- Secret code will appear here -->
+                </div>
+                <div class="solution-stats" id="solution-stats">
+                    <!-- Game statistics will appear here -->
+                </div>
+            </div>
+            
+            <div class="achievement-container" id="achievement-container">
+                <div class="achievement-title">LEVEL COMPLETED! 🎉</div>
+                <div class="achievement" id="achievement">ACCESS TOKEN LOADING...</div>
+                <div class="achievement-desc" id="achievement-desc"></div>
+            </div>
+            
+            <div class="attempts-history">
+                <div class="history-title">
+                    <span>GUESS HISTORY</span>
+                    <span id="history-count">0 attempts</span>
+                </div>
+                <div class="history-list" id="history-list">
+                    <div class="history-item empty-history">No guesses yet. Make your first attempt!</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3>🎮 How to Play:</h3>
+            <ul>
+                <li>Select a difficulty level (4-8 digits). Higher levels give more points!</li>
+                <li>You have <span class="highlight">10 attempts</span> to guess the secret code.</li>
+                <li>After each guess, you'll get feedback:
+                    <ul>
+                        <li><span class="highlight">Correct Position</span>: Digits that are correct and in the right position.</li>
+                        <li><span class="highlight">Correct Number</span>: Digits that are correct but in the wrong position.</li>
+                    </ul>
+                </li>
+                <li>When you complete a level, you earn <span class="points-highlight">Hacker Points</span> based on difficulty.</li>
+                <li>Use Hacker Points to <span class="points-highlight">reveal digits</span> (max 2 per level):
+                    <ul>
+                        <li>Level 1 (4 digits): 5 points each</li>
+                        <li>Level 2 (5 digits): 10 points each</li>
+                        <li>Level 3 (6 digits): 25 points each</li>
+                        <li>Level 4 (7 digits): 50 points each</li>
+                        <li>Level 5 (8 digits): 100 points each</li>
+                    </ul>
+                </li>
+                <li><span class="hint-highlight">Free hints</span> appear after 7 and 9 wrong attempts.</li>
+                <li><span class="highlight">Buy extra attempts</span> for 50 points each when low on attempts.</li>
+                <li><span class="highlight">Game Over shows the solution</span> so you can see how close you were!</li>
+                <li>Points persist between games and can be used anytime.</li>
+                <li>If you guess the code correctly: you'll unlock an achievement!</li>
+                <li>Different achievements for different difficulty levels.</li>
+                <li><span class="highlight">Click "Install App" button</span> to download and play offline!</li>
+                <li>Click "New Game" to start over with a new random code.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // ====================
+        // GAME STATE VARIABLES
+        // ====================
+        let secretCode = [];
+        const maxAttempts = 10;
+        let attemptsLeft = 10;
+        let currentAttempt = 1;
+        let gameOver = false;
+        let attemptsHistory = [];
+        let codeLength = 4;
+        let digitInputs = [];
+        let hintsUsed = 0;
+        let firstHintGiven = false;
+        let secondHintGiven = false;
+        let hackerPoints = 0;
+        let revealedPositions = new Set();
+        
+        // NEW VARIABLES FOR YOUR FEATURES
+        let revealsUsed = 0; // Track reveals used (max 2 per level)
+        const maxReveals = 2; // Maximum reveals allowed per level
+        let wrongAttemptsCount = 0; // Track wrong attempts for hints
+        
+        // Point costs for reveals based on level
+        const revealCosts = {
+            4: 5,   // Level 1: 4 digits - 5 points
+            5: 10,  // Level 2: 5 digits - 10 points
+            6: 25,  // Level 3: 6 digits - 25 points
+            7: 50,  // Level 4: 7 digits - 50 points
+            8: 100  // Level 5: 8 digits - 100 points
+        };
+        
+        // Game statistics
+        let gamesWon = 0;
+        let totalPointsEarned = 0;
+        let currentStreak = 0;
+        let bestStreak = 0;
+        
+        // Achievements for each level
+        const achievements = {
+            4: {
+                name: "NOVICE HACKER",
+                desc: "You cracked the 4-digit code! Basic security bypassed.",
+                points: 10
+            },
+            5: {
+                name: "APPRENTICE HACKER",
+                desc: "5-digit code decrypted! Your skills are improving.",
+                points: 25
+            },
+            6: {
+                name: "SKILLED HACKER",
+                desc: "6-digit security breached! You're becoming a real threat.",
+                points: 50
+            },
+            7: {
+                name: "EXPERT HACKER",
+                desc: "7-digit fortress penetrated! Only the strongest firewalls can stop you.",
+                points: 100
+            },
+            8: {
+                name: "MASTER HACKER",
+                desc: "8-digit maximum security shattered! You are the ultimate code breaker!",
+                points: 250
+            }
+        };
+        
+        // ====================
+        // PWA VARIABLES
+        // ====================
+        let deferredPrompt;
+        
+        // ====================
+        // DOM ELEMENTS
+        // ====================
+        const levelSelector = document.getElementById('level-selector');
+        const codeInputsContainer = document.getElementById('code-inputs-container');
+        const submitBtn = document.getElementById('submit-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const hintBtn = document.getElementById('hint-btn');
+        const hintSection = document.getElementById('hint-section');
+        const hintContent = document.getElementById('hint-content');
+        const revealBtn = document.getElementById('reveal-btn');
+        const usePointsBtn = document.getElementById('use-points-btn');
+        const buyAttemptBtn = document.getElementById('buy-attempt-btn');
+        const revealSection = document.getElementById('reveal-section');
+        const revealOptions = document.getElementById('reveal-options');
+        const attemptsLeftEl = document.getElementById('attempts-left');
+        const currentAttemptEl = document.getElementById('current-attempt');
+        const statusEl = document.getElementById('status');
+        const historyList = document.getElementById('history-list');
+        const messageEl = document.getElementById('message');
+        const achievementContainer = document.getElementById('achievement-container');
+        const achievementEl = document.getElementById('achievement');
+        const achievementDescEl = document.getElementById('achievement-desc');
+        const digitsCountEl = document.getElementById('digits-count');
+        const codeLengthEl = document.getElementById('code-length');
+        const pointsValueEl = document.getElementById('points-value');
+        const gamesWonEl = document.getElementById('games-won');
+        const totalPointsEl = document.getElementById('total-points');
+        const bestStreakEl = document.getElementById('best-streak');
+        const currentLevelDisplayEl = document.getElementById('current-level-display');
+        const historyCountEl = document.getElementById('history-count');
+        const installBtn = document.getElementById('installBtn');
+        const offlineNotice = document.getElementById('offlineNotice');
+        const exportBtn = document.getElementById('export-btn');
+        const importBtn = document.getElementById('import-btn');
+        const revealCostEl = document.getElementById('reveal-cost');
+        const revealsUsedEl = document.getElementById('reveals-used');
+        
+        // NEW DOM ELEMENTS FOR SOLUTION REVEAL
+        const solutionReveal = document.getElementById('solution-reveal');
+        const solutionCodeEl = document.getElementById('solution-code');
+        const solutionStatsEl = document.getElementById('solution-stats');
+        
+        // ====================
+        // PWA FUNCTIONALITY
+        // ====================
+        
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registered successfully:', registration.scope);
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed:', err);
+                    });
+            });
+        }
+        
+        // Force PWA manifest override
+        function overrideGitHubPWA() {
+            // Remove any existing manifest links
+            document.querySelectorAll('link[rel="manifest"]').forEach(link => link.remove());
+            
+            // Add our manifest with a unique ID
+            const manifestLink = document.createElement('link');
+            manifestLink.rel = 'manifest';
+            manifestLink.href = 'manifest.json?v=' + Date.now();
+            document.head.appendChild(manifestLink);
+            
+            // Add theme color meta
+            let themeColor = document.querySelector('meta[name="theme-color"]');
+            if (!themeColor) {
+                themeColor = document.createElement('meta');
+                themeColor.name = 'theme-color';
+                themeColor.content = '#0a0e17';
+                document.head.appendChild(themeColor);
+            }
+            
+            // Update viewport for mobile
+            let viewport = document.querySelector('meta[name="viewport"]');
+            if (!viewport) {
+                viewport = document.createElement('meta');
+                viewport.name = 'viewport';
+                viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+                document.head.appendChild(viewport);
+            }
+            
+            // Add apple mobile web app meta tags
+            const appleMetaTags = [
+                { name: 'apple-mobile-web-app-capable', content: 'yes' },
+                { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
+                { name: 'apple-mobile-web-app-title', content: 'Code Breaker' }
+            ];
+            
+            appleMetaTags.forEach(tag => {
+                let meta = document.querySelector(`meta[name="${tag.name}"]`);
+                if (!meta) {
+                    meta = document.createElement('meta');
+                    meta.name = tag.name;
+                    meta.content = tag.content;
+                    document.head.appendChild(meta);
+                }
+            });
+        }
+        
+        // Call this early
+        overrideGitHubPWA();
+        
+        // Before Install Prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installBtn.style.display = 'block';
+            
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                if (installBtn.style.display === 'block') {
+                    installBtn.style.display = 'none';
+                }
+            }, 10000);
+        });
+        
+        // Install Button Click
+        installBtn.addEventListener('click', () => {
+            installBtn.style.display = 'none';
+            
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted install');
+                    } else {
+                        console.log('User dismissed install');
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        });
+        
+        // Track install success
+        window.addEventListener('appinstalled', (evt) => {
+            console.log('App was successfully installed');
+            showMessage('App installed successfully! You can now play offline.', 'success');
+        });
+        
+        // Offline/Online Detection
+        window.addEventListener('online', () => {
+            console.log('You are now online!');
+            offlineNotice.style.display = 'none';
+            showMessage('Back online!', 'success');
+        });
+        
+        window.addEventListener('offline', () => {
+            console.log('You are now offline!');
+            offlineNotice.style.display = 'block';
+            showMessage('You are offline - game saves work locally', 'points');
+        });
+        
+        // Check initial connection
+        if (!navigator.onLine) {
+            offlineNotice.style.display = 'block';
+        }
+        
+        // ====================
+        // STORAGE MANAGEMENT
+        // ====================
+        
+        const gameStorage = {
+            setItem: function(key, value) {
+                try {
+                    localStorage.setItem(key, JSON.stringify(value));
+                    return true;
+                } catch (e) {
+                    console.warn('localStorage failed, using fallback:', e);
+                    if (!window.gameCache) window.gameCache = {};
+                    window.gameCache[key] = value;
+                    return false;
+                }
+            },
+            
+            getItem: function(key) {
+                try {
+                    const item = localStorage.getItem(key);
+                    return item ? JSON.parse(item) : null;
+                } catch (e) {
+                    console.warn('localStorage read failed:', e);
+                    if (window.gameCache && window.gameCache[key]) {
+                        return window.gameCache[key];
+                    }
+                    return null;
+                }
+            },
+            
+            removeItem: function(key) {
+                try {
+                    localStorage.removeItem(key);
+                } catch (e) {
+                    console.warn('localStorage remove failed:', e);
+                }
+                if (window.gameCache) {
+                    delete window.gameCache[key];
+                }
+            }
+        };
+        
+        // Load game data
+        function loadGameData() {
+            try {
+                const savedPoints = gameStorage.getItem('codeBreakerPoints');
+                if (savedPoints !== null) {
+                    hackerPoints = parseInt(savedPoints);
+                }
+                
+                const savedWins = gameStorage.getItem('codeBreakerWins');
+                if (savedWins !== null) {
+                    gamesWon = parseInt(savedWins);
+                }
+                
+                const savedStreak = gameStorage.getItem('codeBreakerStreak');
+                if (savedStreak !== null) {
+                    bestStreak = parseInt(savedStreak);
+                }
+                
+                const savedTotal = gameStorage.getItem('codeBreakerTotalPoints');
+                if (savedTotal !== null) {
+                    totalPointsEarned = parseInt(savedTotal);
+                }
+                
+                const savedLevel = gameStorage.getItem('codeBreakerLevel');
+                if (savedLevel !== null) {
+                    codeLength = parseInt(savedLevel);
+                }
+            } catch (e) {
+                console.log("Could not load game data from storage");
+            }
+        }
+        
+        // Save game data
+        function saveGameData() {
+            try {
+                gameStorage.setItem('codeBreakerPoints', hackerPoints);
+                gameStorage.setItem('codeBreakerWins', gamesWon);
+                gameStorage.setItem('codeBreakerStreak', bestStreak);
+                gameStorage.setItem('codeBreakerTotalPoints', totalPointsEarned);
+                gameStorage.setItem('codeBreakerLevel', codeLength);
+            } catch (e) {
+                console.log("Could not save game data to storage");
+            }
+        }
+        
+        // ====================
+        // GAME FUNCTIONS
+        // ====================
+        
+        // Initialize the game
+        function initGame() {
+            // Generate random code (no repeating digits)
+            secretCode = [];
+            let digits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+            
+            // Shuffle digits array
+            for (let i = digits.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [digits[i], digits[j]] = [digits[j], digits[i]];
+            }
+            
+            // Take first 'codeLength' digits
+            secretCode = digits.slice(0, codeLength);
+            
+            // Reset game state
+            attemptsLeft = maxAttempts;
+            currentAttempt = 1;
+            gameOver = false;
+            attemptsHistory = [];
+            hintsUsed = 0;
+            firstHintGiven = false;
+            secondHintGiven = false;
+            revealedPositions.clear();
+            
+            // NEW: Reset your features
+            revealsUsed = 0;
+            wrongAttemptsCount = 0;
+            
+            // Update UI
+            updateStatsDisplay();
+            attemptsLeftEl.textContent = attemptsLeft;
+            currentAttemptEl.textContent = currentAttempt;
+            statusEl.textContent = "Active";
+            statusEl.style.color = "#00ff9d";
+            currentLevelDisplayEl.textContent = codeLength;
+            revealCostEl.textContent = revealCosts[codeLength];
+            revealsUsedEl.textContent = revealsUsed;
+            
+            // Hide hint button and section
+            hintBtn.style.display = 'none';
+            hintSection.style.display = 'none';
+            revealSection.style.display = 'none';
+            usePointsBtn.style.display = 'none';
+            buyAttemptBtn.style.display = 'none';
+            
+            // Hide solution reveal and achievement
+            solutionReveal.style.display = 'none';
+            achievementContainer.style.display = 'none';
+            
+            // Clear history
+            historyList.innerHTML = '<div class="history-item empty-history">No guesses yet. Make your first attempt!</div>';
+            updateHistoryCount();
+            
+            // Clear message
+            messageEl.textContent = '';
+            messageEl.className = 'message';
+            
+            // Generate input boxes
+            generateInputBoxes();
+            
+            // Enable/disable submit button
+            updateSubmitButton();
+            
+            // Update reveal button based on points and reveals used
+            updateRevealButton();
+            
+            // Focus on first input
+            if (digitInputs.length > 0) {
+                digitInputs[0].focus();
+            }
+            
+            console.log(`[GAME] Level ${codeLength} initialized | Points: ${hackerPoints}`);
+        }
+        
+        // Update all stats display
+        function updateStatsDisplay() {
+            pointsValueEl.textContent = hackerPoints;
+            gamesWonEl.textContent = gamesWon;
+            totalPointsEl.textContent = totalPointsEarned;
+            bestStreakEl.textContent = bestStreak;
+        }
+        
+        // Update reveal button state
+        function updateRevealButton() {
+            const cost = revealCosts[codeLength];
+            const hasEnoughPoints = hackerPoints >= cost;
+            const canRevealMore = revealsUsed < maxReveals;
+            
+            revealBtn.disabled = !hasEnoughPoints || !canRevealMore || gameOver;
+            revealBtn.innerHTML = `REVEAL DIGIT (${cost} POINTS)`;
+            
+            // Update reveals used display
+            revealsUsedEl.textContent = revealsUsed;
+            
+            // Show/hide use points button
+            if (hasEnoughPoints && canRevealMore && !gameOver) {
+                usePointsBtn.style.display = 'inline-block';
+            } else {
+                usePointsBtn.style.display = 'none';
+            }
+        }
+        
+        // Buy extra attempt
+        function buyExtraAttempt() {
+            const attemptCost = 50;
+            
+            if (hackerPoints < attemptCost) {
+                showMessage(`Need ${attemptCost} points to buy an attempt! You have ${hackerPoints} points.`, 'error');
+                return false;
+            }
+            
+            if (!usePoints(attemptCost)) {
+                showMessage("Not enough points to buy attempt!", 'error');
+                return false;
+            }
+            
+            attemptsLeft++;
+            attemptsLeftEl.textContent = attemptsLeft;
+            
+            showMessage(`+1 attempt purchased for ${attemptCost} points! Attempts left: ${attemptsLeft}`, 'points');
+            
+            // Update buy attempt button
+            updateBuyAttemptButton();
+            
+            return true;
+        }
+        
+        // Update buy attempt button
+        function updateBuyAttemptButton() {
+            const canBuy = hackerPoints >= 50 && attemptsLeft < 5 && !gameOver;
+            
+            if (canBuy) {
+                buyAttemptBtn.style.display = 'inline-block';
+                buyAttemptBtn.disabled = false;
+            } else {
+                buyAttemptBtn.style.display = 'none';
+                buyAttemptBtn.disabled = true;
+            }
+        }
+        
+        // Use points
+        function usePoints(cost) {
+            if (hackerPoints < cost) return false;
+            
+            hackerPoints -= cost;
+            pointsValueEl.textContent = hackerPoints;
+            saveGameData();
+            
+            // Update all point-related buttons
+            updateRevealButton();
+            updateBuyAttemptButton();
+            
+            return true;
+        }
+        
+        // Add points and update UI
+        function addPoints(points) {
+            hackerPoints += points;
+            totalPointsEarned += points;
+            pointsValueEl.textContent = hackerPoints;
+            
+            saveGameData();
+            
+            // Update all point-related buttons
+            updateRevealButton();
+            updateBuyAttemptButton();
+            
+            showMessage(`+${points} Hacker Points earned! Total: ${hackerPoints}`, 'points');
+            
+            console.log(`[POINTS] +${points} | Total: ${hackerPoints}`);
+        }
+        
+        // Generate input boxes
+        function generateInputBoxes() {
+            codeInputsContainer.innerHTML = '';
+            digitInputs = [];
+            
+            for (let i = 0; i < codeLength; i++) {
+                const input = document.createElement('input');
+                input.type = 'tel';
+                input.inputmode = 'numeric';
+                input.pattern = '[0-9]*';
+                input.className = 'digit-input';
+                input.id = `digit-${i}`;
+                input.maxLength = '1';
+                input.dataset.position = i;
+                
+                if (revealedPositions.has(i)) {
+                    input.value = secretCode[i];
+                    input.classList.add('revealed');
+                    input.disabled = true;
+                }
+                
+                input.addEventListener('input', (e) => handleInputChange(e, i));
+                input.addEventListener('keydown', (e) => handleKeyDown(e, i));
+                
+                input.addEventListener('paste', (e) => {
+                    e.preventDefault();
+                    const pasted = e.clipboardData.getData('text').replace(/\D/g, '');
+                    if (pasted.length === 1) {
+                        input.value = pasted;
+                        handleInputChange({target: input}, i);
+                    }
+                });
+                
+                digitInputs.push(input);
+                codeInputsContainer.appendChild(input);
+            }
+            
+            digitsCountEl.textContent = codeLength;
+            codeLengthEl.textContent = codeLength;
+        }
+        
+        // Handle input changes
+        function handleInputChange(e, index) {
+            const input = e.target;
+            
+            if (revealedPositions.has(index)) return;
+            
+            let value = input.value;
+            value = value.replace(/[^0-9]/g, '');
+            
+            if (value.length > 1) {
+                value = value.slice(-1);
+            }
+            
+            input.value = value;
+            
+            if (input.value) {
+                input.classList.add('filled');
+            } else {
+                input.classList.remove('filled');
+            }
+            
+            if (input.value && index < digitInputs.length - 1) {
+                setTimeout(() => {
+                    let nextIndex = index + 1;
+                    while (nextIndex < digitInputs.length && revealedPositions.has(nextIndex)) {
+                        nextIndex++;
+                    }
+                    if (nextIndex < digitInputs.length) {
+                        digitInputs[nextIndex].focus();
+                    }
+                }, 10);
+            }
+            
+            updateSubmitButton();
+        }
+        
+        // Handle keydown events
+        function handleKeyDown(e, index) {
+            const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'];
+            
+            if (!/^[0-9]$/.test(e.key) && !allowedKeys.includes(e.key) && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                return;
+            }
+            
+            if (revealedPositions.has(index)) {
+                e.preventDefault();
+                return;
+            }
+            
+            if (e.key === 'ArrowLeft' && index > 0) {
+                let prevIndex = index - 1;
+                while (prevIndex >= 0 && revealedPositions.has(prevIndex)) {
+                    prevIndex--;
+                }
+                if (prevIndex >= 0) {
+                    digitInputs[prevIndex].focus();
+                }
+                e.preventDefault();
+            }
+            
+            if (e.key === 'ArrowRight' && index < digitInputs.length - 1) {
+                let nextIndex = index + 1;
+                while (nextIndex < digitInputs.length && revealedPositions.has(nextIndex)) {
+                    nextIndex++;
+                }
+                if (nextIndex < digitInputs.length) {
+                    digitInputs[nextIndex].focus();
+                }
+                e.preventDefault();
+            }
+            
+            if (e.key === 'Backspace') {
+                if (!e.target.value && index > 0) {
+                    let prevIndex = index - 1;
+                    while (prevIndex >= 0 && revealedPositions.has(prevIndex)) {
+                        prevIndex--;
+                    }
+                    if (prevIndex >= 0) {
+                        setTimeout(() => {
+                            digitInputs[prevIndex].focus();
+                            digitInputs[prevIndex].value = '';
+                            digitInputs[prevIndex].classList.remove('filled');
+                            updateSubmitButton();
+                        }, 10);
+                    }
+                    e.preventDefault();
+                }
+            }
+            
+            if (e.key === 'Enter') {
+                submitGuess();
+                e.preventDefault();
+            }
+            
+            updateSubmitButton();
+        }
+        
+        // Update submit button state
+        function updateSubmitButton() {
+            let allFilled = true;
+            for (let i = 0; i < digitInputs.length; i++) {
+                if (!revealedPositions.has(i) && !/^[0-9]$/.test(digitInputs[i].value)) {
+                    allFilled = false;
+                    break;
+                }
+            }
+            
+            submitBtn.disabled = !allFilled || gameOver;
+        }
+        
+        // Submit guess
+        function submitGuess() {
+            if (gameOver || submitBtn.disabled) return;
+            
+            const guess = [];
+            for (let i = 0; i < codeLength; i++) {
+                if (revealedPositions.has(i)) {
+                    guess.push(secretCode[i]);
+                } else {
+                    guess.push(parseInt(digitInputs[i].value));
+                }
+            }
+            
+            const feedback = calculateFeedback(guess);
+            
+            attemptsHistory.push({
+                attempt: currentAttempt,
+                guess: [...guess],
+                correctPosition: feedback.correctPosition,
+                correctNumber: feedback.correctNumber
+            });
+            
+            updateHistory();
+            updateGameState();
+            
+            if (feedback.correctPosition === codeLength) {
+                gameWin();
+                return;
+            }
+            
+            // Track wrong attempts for hints
+            wrongAttemptsCount++;
+            
+            // Check for hint availability (YOUR CHANGES)
+            if (wrongAttemptsCount === 7 && !firstHintGiven) {
+                showHintButton("first");
+            }
+            if (wrongAttemptsCount === 9 && !secondHintGiven) {
+                showHintButton("second");
+            }
+            
+            attemptsLeft--;
+            currentAttempt++;
+            
+            // Update buy attempt button when attempts get low
+            if (attemptsLeft < 5) {
+                updateBuyAttemptButton();
+            }
+            
+            if (attemptsLeft === 0) {
+                gameLoss();
+                return;
+            }
+            
+            attemptsLeftEl.textContent = attemptsLeft;
+            currentAttemptEl.textContent = currentAttempt;
+            
+            digitInputs.forEach((input, index) => {
+                if (!revealedPositions.has(index)) {
+                    input.value = '';
+                    input.classList.remove('filled');
+                }
+            });
+            
+            for (let i = 0; i < digitInputs.length; i++) {
+                if (!revealedPositions.has(i)) {
+                    digitInputs[i].focus();
+                    break;
+                }
+            }
+            
+            updateSubmitButton();
+        }
+        
+        // Show hint button
+        function showHintButton(hintType) {
+            hintBtn.style.display = 'inline-block';
+            hintBtn.dataset.hintType = hintType;
+        }
+        
+        // Generate a useful hint that doesn't reveal already known information
+        function generateUsefulHint() {
+            // Get positions that haven't been revealed yet
+            const unrevealedPositions = [];
+            for (let i = 0; i < codeLength; i++) {
+                if (!revealedPositions.has(i)) {
+                    unrevealedPositions.push(i);
+                }
+            }
+            
+            if (unrevealedPositions.length === 0) {
+                return "All positions have been revealed!";
+            }
+            
+            // Try to give a hint about an unrevealed position
+            const randomPos = unrevealedPositions[Math.floor(Math.random() * unrevealedPositions.length)];
+            
+            // Check what we know from previous guesses
+            const knownInfo = analyzePreviousGuesses();
+            
+            // Don't give a hint about something already strongly indicated
+            // Try to give different types of hints
+            const hintTypes = [
+                // 1. Reveal a specific digit (but not one that's already heavily hinted)
+                () => {
+                    // Find a position that's not already obvious from guesses
+                    for (let i = 0; i < unrevealedPositions.length; i++) {
+                        const pos = unrevealedPositions[i];
+                        if (!knownInfo.strongHints.includes(pos)) {
+                            return `Digit at position ${pos + 1} is ${secretCode[pos]}.`;
+                        }
+                    }
+                    // If all positions have strong hints, reveal one anyway
+                    const pos = unrevealedPositions[0];
+                    return `Digit at position ${pos + 1} is ${secretCode[pos]}.`;
+                },
+                
+                // 2. Sum of digits
+                () => {
+                    const sum = secretCode.reduce((a, b) => a + b, 0);
+                    return `The sum of all digits is ${sum}.`;
+                },
+                
+                // 3. Range of digits
+                () => {
+                    const min = Math.min(...secretCode);
+                    const max = Math.max(...secretCode);
+                    return `Digits range from ${min} to ${max}.`;
+                },
+                
+                // 4. Digit repetition analysis
+                () => {
+                    const frequency = {};
+                    secretCode.forEach(digit => {
+                        frequency[digit] = (frequency[digit] || 0) + 1;
+                    });
+                    
+                    const repeatedDigits = Object.entries(frequency)
+                        .filter(([digit, count]) => count > 1)
+                        .map(([digit, count]) => ({digit, count}));
+                    
+                    if (repeatedDigits.length > 0) {
+                        const repeats = repeatedDigits.map(r => `"${r.digit}" appears ${r.count} times`).join(', ');
+                        return `Number repetitions: ${repeats}.`;
+                    } else {
+                        return "All digits are unique (no repetitions).";
+                    }
+                },
+                
+                // 5. Parity hint (odd/even)
+                () => {
+                    const oddCount = secretCode.filter(d => d % 2 === 1).length;
+                    const evenCount = codeLength - oddCount;
+                    return `There are ${oddCount} odd digits and ${evenCount} even digits.`;
+                },
+                
+                // 6. Consecutive digits hint
+                () => {
+                    const hasConsecutive = secretCode.some((d, i, arr) => 
+                        i > 0 && Math.abs(d - arr[i-1]) === 1
+                    );
+                    return hasConsecutive ? 
+                        "Contains consecutive digits (difference of 1)." : 
+                        "No consecutive digits.";
+                }
+            ];
+            
+            // Try to give a hint type that hasn't been given before in this game
+            const usedHintTypes = new Set();
+            
+            // Check previous hints
+            if (hintContent.textContent.includes("sum")) usedHintTypes.add(1);
+            if (hintContent.textContent.includes("range")) usedHintTypes.add(2);
+            if (hintContent.textContent.includes("appears")) usedHintTypes.add(3);
+            if (hintContent.textContent.includes("odd") || hintContent.textContent.includes("even")) usedHintTypes.add(4);
+            if (hintContent.textContent.includes("consecutive")) usedHintTypes.add(5);
+            
+            // Try unused hint types first
+            for (let i = 0; i < hintTypes.length; i++) {
+                if (!usedHintTypes.has(i)) {
+                    try {
+                        const hint = hintTypes[i]();
+                        if (hint) return hint;
+                    } catch (e) {
+                        continue;
+                    }
+                }
+            }
+            
+            // Fallback to any hint type
+            for (let i = 0; i < hintTypes.length; i++) {
+                try {
+                    const hint = hintTypes[i]();
+                    if (hint) return hint;
+                } catch (e) {
+                    continue;
+                }
+            }
+            
+            // Ultimate fallback
+            return `Digit at position ${randomPos + 1} is ${secretCode[randomPos]}.`;
+        }
+        
+        // Analyze previous guesses to avoid giving redundant hints
+        function analyzePreviousGuesses() {
+            const result = {
+                strongHints: [], // Positions that are strongly hinted by previous guesses
+                possibleDigits: Array.from({length: codeLength}, () => new Set())
+            };
+            
+            // Analyze each guess to see what it reveals
+            attemptsHistory.forEach(entry => {
+                const feedback = calculateFeedback(entry.guess);
+                
+                // If a position has correct digit in multiple guesses, it's strongly hinted
+                for (let i = 0; i < codeLength; i++) {
+                    if (entry.guess[i] === secretCode[i]) {
+                        // This would be a correct guess, but since we're here, it's not fully correct
+                        // But if this digit appears in correct position in many guesses, it's hinted
+                        if (!result.strongHints.includes(i)) {
+                            // Simple heuristic: if this digit appears in this position in 2+ guesses
+                            let count = 0;
+                            attemptsHistory.forEach(e => {
+                                if (e.guess[i] === entry.guess[i]) count++;
+                            });
+                            if (count >= 2) {
+                                result.strongHints.push(i);
+                            }
+                        }
+                    }
+                }
+            });
+            
+            return result;
+        }
+        
+        // Generate and show a hint
+        function generateHint() {
+            const hintType = hintBtn.dataset.hintType;
+            
+            hintBtn.style.display = 'none';
+            
+            if (hintType === "first") {
+                firstHintGiven = true;
+            } else if (hintType === "second") {
+                secondHintGiven = true;
+            }
+            
+            hintsUsed++;
+            
+            const hint = generateUsefulHint();
+            
+            const hintNumber = hintType === "first" ? "First" : "Second";
+            hintContent.textContent = `${hintNumber} free hint (after ${wrongAttemptsCount} wrong attempts): ${hint}`;
+            hintSection.style.display = 'block';
+        }
+        
+        // Show reveal options
+        function showRevealOptions() {
+            const cost = revealCosts[codeLength];
+            
+            if (hackerPoints < cost || gameOver || revealsUsed >= maxReveals) return;
+            
+            revealOptions.innerHTML = '';
+            
+            for (let i = 0; i < codeLength; i++) {
+                if (!revealedPositions.has(i)) {
+                    const option = document.createElement('div');
+                    option.className = 'reveal-option';
+                    option.textContent = i + 1;
+                    option.dataset.position = i;
+                    option.addEventListener('click', () => revealDigit(i));
+                    revealOptions.appendChild(option);
+                }
+            }
+            
+            if (revealOptions.children.length === 0) {
+                showMessage("All positions already revealed!", 'points');
+                return;
+            }
+            
+            revealSection.style.display = 'block';
+            usePointsBtn.style.display = 'none';
+        }
+        
+        // Reveal a specific digit
+        function revealDigit(position) {
+            const cost = revealCosts[codeLength];
+            
+            if (revealsUsed >= maxReveals) {
+                showMessage(`Maximum ${maxReveals} reveals allowed per level!`, 'error');
+                return;
+            }
+            
+            if (!usePoints(cost)) {
+                showMessage(`Not enough Hacker Points! Need ${cost} points.`, 'error');
+                return;
+            }
+            
+            revealsUsed++;
+            revealedPositions.add(position);
+            
+            // Update the input box
+            const input = digitInputs[position];
+            input.value = secretCode[position];
+            input.classList.add('revealed');
+            input.disabled = true;
+            
+            // Close reveal section
+            revealSection.style.display = 'none';
+            
+            // Show success message
+            showMessage(`Digit ${position + 1} revealed: ${secretCode[position]} (Cost: ${cost} points, ${maxReveals - revealsUsed} reveals left)`, 'points');
+            
+            // Update buttons
+            updateRevealButton();
+            updateSubmitButton();
+            
+            console.log(`[REVEAL] Position ${position + 1}: ${secretCode[position]}, Cost: ${cost}, Reveals used: ${revealsUsed}`);
+        }
+        
+        // Calculate feedback
+        function calculateFeedback(guess) {
+            let correctPosition = 0;
+            let correctNumber = 0;
+            
+            const secretCopy = [...secretCode];
+            const guessCopy = [...guess];
+            
+            for (let i = 0; i < codeLength; i++) {
+                if (guessCopy[i] === secretCopy[i]) {
+                    correctPosition++;
+                    secretCopy[i] = -1;
+                    guessCopy[i] = -2;
+                }
+            }
+            
+            for (let i = 0; i < codeLength; i++) {
+                if (guessCopy[i] >= 0) {
+                    const foundIndex = secretCopy.indexOf(guessCopy[i]);
+                    if (foundIndex !== -1) {
+                        correctNumber++;
+                        secretCopy[foundIndex] = -1;
+                    }
+                }
+            }
+            
+            return { correctPosition, correctNumber };
+        }
+        
+        // NEW: Calculate best attempt statistics
+        function calculateBestAttemptStats() {
+            if (attemptsHistory.length === 0) return null;
+            
+            let bestAttempt = attemptsHistory[0];
+            
+            attemptsHistory.forEach(attempt => {
+                // Score based on correct positions (weighted higher) and correct numbers
+                const attemptScore = (attempt.correctPosition * 3) + attempt.correctNumber;
+                const bestScore = (bestAttempt.correctPosition * 3) + bestAttempt.correctNumber;
+                
+                if (attemptScore > bestScore) {
+                    bestAttempt = attempt;
+                } else if (attemptScore === bestScore && attempt.correctPosition > bestAttempt.correctPosition) {
+                    // Tie-breaker: more correct positions wins
+                    bestAttempt = attempt;
+                }
+            });
+            
+            return bestAttempt;
+        }
+        
+        // NEW: Show solution reveal
+        function showSolutionReveal() {
+            // Show the solution reveal container
+            solutionReveal.style.display = 'block';
+            
+            // Display the secret code
+            solutionCodeEl.textContent = secretCode.join('');
+            
+            // Calculate statistics
+            const bestAttempt = calculateBestAttemptStats();
+            const totalGuesses = attemptsHistory.length;
+            
+            // Build statistics text
+            let statsHtml = '';
+            
+            if (bestAttempt) {
+                statsHtml += `
+                    <div>Your best guess was attempt #${bestAttempt.attempt}: <strong>${bestAttempt.guess.join('')}</strong></div>
+                    <div>It had <span class="solution-stat">${bestAttempt.correctPosition} correct positions</span> 
+                    and <span class="solution-stat">${bestAttempt.correctNumber} correct numbers</span></div>
+                `;
+            }
+            
+            statsHtml += `
+                <div>You made <span class="solution-stat">${totalGuesses} attempts</span></div>
+                <div>You used <span class="solution-stat">${revealsUsed} digit reveals</span> 
+                and <span class="solution-stat">${hintsUsed} hints</span></div>
+                <div style="margin-top: 15px; font-style: italic;">The secret code was ${secretCode.join('-')}</div>
+            `;
+            
+            solutionStatsEl.innerHTML = statsHtml;
+            
+            // Scroll to solution reveal
+            setTimeout(() => {
+                solutionReveal.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 500);
+        }
+        
+        // Update history display
+        function updateHistory() {
+            historyList.innerHTML = '';
+            
+            if (attemptsHistory.length === 0) {
+                historyList.innerHTML = '<div class="history-item empty-history">No guesses yet. Make your first attempt!</div>';
+                updateHistoryCount();
+                return;
+            }
+            
+            [...attemptsHistory].reverse().forEach(entry => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                historyItem.innerHTML = `
+                    <div class="history-attempt">${entry.guess.join('')}</div>
+                    <div class="history-feedback">
+                        <div class="correct-position">${entry.correctPosition} correct position</div>
+                        <div class="correct-number">${entry.correctNumber} correct number</div>
+                    </div>
+                `;
+                historyList.appendChild(historyItem);
+            });
+            
+            updateHistoryCount();
+        }
+        
+        // Update history count
+        function updateHistoryCount() {
+            const count = attemptsHistory.length;
+            historyCountEl.textContent = `${count} attempt${count !== 1 ? 's' : ''}`;
+        }
+        
+        // Update game state
+        function updateGameState() {
+            if (attemptsLeft <= 3) {
+                statusEl.style.color = "#ff4757";
+            } else if (attemptsLeft <= 6) {
+                statusEl.style.color = "#ffa502";
+            } else {
+                statusEl.style.color = "#00ff9d";
+            }
+            
+            updateBuyAttemptButton();
+        }
+        
+        // Handle win
+        function gameWin() {
+            gameOver = true;
+            statusEl.textContent = "VICTORY!";
+            showMessage('CODE CRACKED! ACHIEVEMENT UNLOCKED!', 'success');
+            
+            digitInputs.forEach(input => input.disabled = true);
+            
+            gamesWon++;
+            currentStreak++;
+            
+            if (currentStreak > bestStreak) {
+                bestStreak = currentStreak;
+            }
+            
+            const pointsEarned = achievements[codeLength].points;
+            addPoints(pointsEarned);
+            
+            const achievement = achievements[codeLength];
+            achievementEl.textContent = achievement.name;
+            achievementDescEl.textContent = `${achievement.desc} You earned ${pointsEarned} Hacker Points!`;
+            achievementContainer.style.display = 'block';
+            
+            setTimeout(() => {
+                achievementContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 500);
+            
+            hintBtn.style.display = 'none';
+            hintSection.style.display = 'none';
+            revealSection.style.display = 'none';
+            usePointsBtn.style.display = 'none';
+            buyAttemptBtn.style.display = 'none';
+            updateHistory();
+            updateStatsDisplay();
+        }
+        
+        // Handle loss
+        function gameLoss() {
+            gameOver = true;
+            currentStreak = 0;
+            statusEl.textContent = "GAME OVER";
+            showMessage('MAXIMUM ATTEMPTS EXCEEDED. SECRET CODE REVEALED BELOW!', 'error');
+            
+            digitInputs.forEach(input => input.disabled = true);
+            hintBtn.style.display = 'none';
+            revealSection.style.display = 'none';
+            usePointsBtn.style.display = 'none';
+            buyAttemptBtn.style.display = 'none';
+            
+            // Show the solution reveal
+            showSolutionReveal();
+            
+            updateStatsDisplay();
+        }
+        
+        // Show message
+        function showMessage(text, type) {
+            messageEl.textContent = text;
+            messageEl.className = `message ${type}`;
+            
+            if (type === 'error' || type === 'points') {
+                setTimeout(() => {
+                    messageEl.className = 'message';
+                }, 4000);
+            }
+        }
+        
+        // Handle level selection
+        function handleLevelSelection(selectedDigits) {
+            document.querySelectorAll('.level-btn').forEach(option => {
+                option.classList.toggle('selected', option.dataset.digits === selectedDigits.toString());
+            });
+            
+            codeLength = selectedDigits;
+            initGame();
+        }
+        
+        // Export game data
+        function exportGameData() {
+            const gameData = {
+                points: hackerPoints,
+                wins: gamesWon,
+                streak: bestStreak,
+                totalPoints: totalPointsEarned,
+                version: '1.0',
+                exportDate: new Date().toISOString()
+            };
+            
+            const dataStr = JSON.stringify(gameData, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `code-breaker-save-${new Date().toISOString().slice(0,10)}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            showMessage('Game data exported successfully!', 'success');
+        }
+        
+        // Import game data
+        function importGameData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = e => { 
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(event) {
+                    try {
+                        const importedData = JSON.parse(event.target.result);
+                        
+                        if (importedData.version === '1.0') {
+                            hackerPoints = importedData.points || hackerPoints;
+                            gamesWon = importedData.wins || gamesWon;
+                            bestStreak = importedData.streak || bestStreak;
+                            totalPointsEarned = importedData.totalPoints || totalPointsEarned;
+                            
+                            saveGameData();
+                            updateStatsDisplay();
+                            updateRevealButton();
+                            updateBuyAttemptButton();
+                            showMessage('Game data imported successfully!', 'success');
+                            
+                            console.log('Game data imported:', importedData);
+                        } else {
+                            showMessage('Invalid save file version', 'error');
+                        }
+                    } catch (error) {
+                        showMessage('Error importing save file', 'error');
+                        console.error('Import error:', error);
+                    }
+                };
+                
+                reader.readAsText(file);
+            };
+            
+            input.click();
+        }
+        
+        // ====================
+        // EVENT LISTENERS
+        // ====================
+        
+        levelSelector.addEventListener('click', (e) => {
+            if (e.target.closest('.level-btn')) {
+                const levelBtn = e.target.closest('.level-btn');
+                handleLevelSelection(parseInt(levelBtn.dataset.digits));
+            }
+        });
+        
+        submitBtn.addEventListener('click', submitGuess);
+        resetBtn.addEventListener('click', initGame);
+        hintBtn.addEventListener('click', generateHint);
+        revealBtn.addEventListener('click', showRevealOptions);
+        usePointsBtn.addEventListener('click', showRevealOptions);
+        buyAttemptBtn.addEventListener('click', buyExtraAttempt);
+        exportBtn.addEventListener('click', exportGameData);
+        importBtn.addEventListener('click', importGameData);
+        
+        // Save game state on exit
+        window.addEventListener('beforeunload', () => {
+            saveGameData();
+        });
+        
+        // Auto-save every minute
+        setInterval(saveGameData, 60000);
+        
+        // ====================
+        // INITIALIZATION
+        // ====================
+        
+        window.addEventListener('DOMContentLoaded', () => {
+            loadGameData();
+            codeLength = gameStorage.getItem('codeBreakerLevel') || 4;
+            initGame();
+        });
+    </script>
+</body>
+</html>
